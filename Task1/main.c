@@ -20,13 +20,20 @@ Arduino : -  R  A5 A4 A3 A2 A1 A0
 
 // Define the binary value to set pin 6 only as output using port D
 #define DDRD_PIN_6_OUT 0b01000000
+// First two bits of TCCR0A determine compare match behavior for OC0A,
+// values selected from datasheet for toggling on compare match (fast PWM)
+#define TCCR0A_TOGGLE_A 0b01000000
+// Set WGM01 and WGM00 for fast PWM, counting up to 0xFF
+#define TCCR0A_FAST_PWM_FULL_RANGE 0b00000011
+// TCCR0B bits to set for a 1x clock divider
+#define TCCR0B_CLK_1x 0b00000001 
 
 // Flag to indicate a full button press has been registered to main loop.
 int button_pressed;
 
 // Store the duty cycle values to switch between
 #define N_DUTY_CYCLE_VALUES 4
-const float DUTY_CYCLE_VALUES [N_DUTY_CYCLE_VALUES] = {0.0, 25, 62.5, 87.5};
+const float DUTY_CYCLE_VALUES [N_DUTY_CYCLE_VALUES] = {0.0, 0.25, 0.625, 0.875};
 
 // Program state variable to track next duty cycle output to set
 uint8_t next_duty_cycle_idx;
@@ -41,7 +48,14 @@ ISR (INT0_vect)
 
 void set_pwm_dutycycle(float percentage)
 {
-	
+	// Set OCR0A to percentage of the timer range (0 to 255)
+	OCR0A = (uint8_t) (percentage*255);
+	// Using fast PWM mode for timer 0, setting up timer registers.
+	// Set TCCR0A using bitwise OR to combine required bits.
+	TCCR0A = TCCR0A_TOGGLE_A | TCCR0A_FAST_PWM_FULL_RANGE;
+	// Use 1x clock divider for highest PWM frequency.
+	TCCR0B = TCCR0B_CLK_1x;
+	// Timer has been started by setting clock divider.
 }
 
 // Set up pin states and values, and initialize any internal hardware which
