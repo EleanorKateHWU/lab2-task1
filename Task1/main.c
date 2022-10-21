@@ -30,7 +30,7 @@ Arduino : -  R  A5 A4 A3 A2 A1 A0
 #define TCCR0B_CLK_1x 0b00000001 
 
 // Flag to indicate a full button press has been registered to main loop.
-int button_pressed;
+volatile uint8_t button_pressed;
 
 // Store the duty cycle values to switch between
 #define N_DUTY_CYCLE_VALUES 4
@@ -44,19 +44,21 @@ ISR (INT0_vect)
 {
 	// Add one to the button pressed flag (using addition/subtraction instead
 	// of value setting to allow for queue type use)
-	//button_pressed = 1;
+	button_pressed = 1;
 }
 
 void set_pwm_dutycycle(float percentage)
 {
+	TCCR0B = 0x00; // Temporarily stop timer while updating parameters
+	TCNT0 = 0x00; // Reset timer counter
 	// Set OCR0A to percentage of the timer range (0 to 255)
 	OCR0A = percentage*255;
-	// Using fast PWM mode for timer 0, setting up timer registers.
-	// Set TCCR0A using bitwise OR to combine required bits.
+	// Using fast PWM mode for timer 0, setting up timer registers
+	// Set TCCR0A using bitwise OR to combine required bits
 	TCCR0A = TCCR0A_CLEAR_A | TCCR0A_FAST_PWM_FULL_RANGE;
-	// Use 1x clock divider for highest PWM frequency.
+	// Use 1x clock divider for highest PWM frequency
 	TCCR0B = TCCR0B_CLK_1x;
-	// Timer has been started by setting clock divider.
+	// Timer has been started by setting clock divider
 }
 
 // Set up pin states and values, and initialize any internal hardware which
@@ -71,8 +73,8 @@ void init()
 	// Initialize port D output to all zeros (only output pin is off)
 	PORTD = 0x00;
 	
-	// Start outputting the first PWM duty cycle
-	next_duty_cycle_idx = 1;
+	// Start with outputting the first PWM duty cycle (0)
+	next_duty_cycle_idx = 0;
 	
 	// Set up interrupt for button press (falling-edge)
 	EIMSK = (1 << INT0); // Enable INT0 Interrupt
