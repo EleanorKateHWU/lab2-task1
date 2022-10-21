@@ -22,6 +22,7 @@ Arduino : -  R  A5 A4 A3 A2 A1 A0
 #define DDRD_PIN_6_OUT 0b01000000
 // First two bits of TCCR0A determine compare match behavior for OC0A,
 // values selected from datasheet for toggling on compare match (fast PWM)
+#define TCCR0A_CLEAR_A 0b10000000
 #define TCCR0A_TOGGLE_A 0b01000000
 // Set WGM01 and WGM00 for fast PWM, counting up to 0xFF
 #define TCCR0A_FAST_PWM_FULL_RANGE 0b00000011
@@ -43,16 +44,16 @@ ISR (INT0_vect)
 {
 	// Add one to the button pressed flag (using addition/subtraction instead
 	// of value setting to allow for queue type use)
-	++button_pressed;
+	//button_pressed = 1;
 }
 
 void set_pwm_dutycycle(float percentage)
 {
 	// Set OCR0A to percentage of the timer range (0 to 255)
-	OCR0A = (uint8_t) (percentage*255);
+	OCR0A = percentage*255;
 	// Using fast PWM mode for timer 0, setting up timer registers.
 	// Set TCCR0A using bitwise OR to combine required bits.
-	TCCR0A = TCCR0A_TOGGLE_A | TCCR0A_FAST_PWM_FULL_RANGE;
+	TCCR0A = TCCR0A_CLEAR_A | TCCR0A_FAST_PWM_FULL_RANGE;
 	// Use 1x clock divider for highest PWM frequency.
 	TCCR0B = TCCR0B_CLK_1x;
 	// Timer has been started by setting clock divider.
@@ -71,7 +72,7 @@ void init()
 	PORTD = 0x00;
 	
 	// Start outputting the first PWM duty cycle
-	next_duty_cycle_idx = 0;
+	next_duty_cycle_idx = 1;
 	
 	// Set up interrupt for button press (falling-edge)
 	EIMSK = (1 << INT0); // Enable INT0 Interrupt
@@ -95,7 +96,7 @@ int main(void)
 			{
 				next_duty_cycle_idx = 0;
 			}
-			--button_pressed;
+			button_pressed = 0;
 		}
     }
 }
