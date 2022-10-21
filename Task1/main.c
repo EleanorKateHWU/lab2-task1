@@ -85,13 +85,13 @@ int main(void)
 	// Run initialization function
 	init();
 	// Set initial PWM output (which starts at 0%) and prepare next cycle index
-	set_pwm_dutycycle(next_duty_cycle_idx++);
+	set_pwm_dutycycle(DUTY_CYCLE_VALUES[next_duty_cycle_idx++]);
 	// Main Program Loop
     while (1) 
     {
 		if (button_pressed)
 		{
-			set_pwm_dutycycle(next_duty_cycle_idx++);
+			set_pwm_dutycycle(DUTY_CYCLE_VALUES[next_duty_cycle_idx++]);
 			if (next_duty_cycle_idx >= N_DUTY_CYCLE_VALUES)
 			{
 				next_duty_cycle_idx = 0;
